@@ -1033,6 +1033,7 @@ OBJS-$(CONFIG_LIBXAVS_ENCODER)            += libxavs.o
 OBJS-$(CONFIG_LIBXAVS2_ENCODER)           += libxavs2.o
 OBJS-$(CONFIG_LIBXVID_ENCODER)            += libxvid.o
 OBJS-$(CONFIG_LIBZVBI_TELETEXT_DECODER)   += libzvbi-teletextdec.o ass.o
+OBJS-$(CONFIG_MF)                         += mfenc.o mf_utils.o
 
 # parsers
 OBJS-$(CONFIG_AAC_LATM_PARSER)         += latm_parser.o
