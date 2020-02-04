@@ -81,7 +81,7 @@ static const AVOption fdk_aac_dec_options[] = {
     { "drc_heavy", "Dynamic Range Control: heavy compression, where [1] is on (RF mode) and [0] is off",
                      OFFSET(drc_heavy),      AV_OPT_TYPE_INT,   { .i64 = -1},  -1, 1,   AD, NULL    },
 #if FDKDEC_VER_AT_LEAST(2, 5) // 2.5.10
-    { "level_limit", "Signal level limiting", OFFSET(level_limit), AV_OPT_TYPE_INT, { .i64 = 0 }, -1, 1, AD },
+    { "level_limit", "Signal level limiting (-1 auto, 0 off, 1 enabled)", OFFSET(level_limit), AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 1, AD },
 #endif
 #if FDKDEC_VER_AT_LEAST(3, 0) // 3.0.0
     { "drc_effect","Dynamic Range Control: effect type, where e.g. [0] is none and [6] is general",
