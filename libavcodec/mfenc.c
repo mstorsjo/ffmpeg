@@ -25,6 +25,7 @@
 #include "mf_utils.h"
 #include "libavutil/imgutils.h"
 #include "libavutil/opt.h"
+#include "libavutil/time.h"
 
 // Include after mf_utils.h due to Windows include mess.
 #include "mpeg4audio.h"
@@ -1082,6 +1083,30 @@ static int mf_init(AVCodecContext *avctx)
     if (FAILED(hr)) {
         av_log(avctx, AV_LOG_ERROR, "could not start stream (%s)\n", ff_hr_str(hr));
         return AVERROR_EXTERNAL;
+    }
+
+    if (avctx->flags & AV_CODEC_FLAG_GLOBAL_HEADER && c->async_events &&
+        c->is_video && !avctx->extradata) {
+        int sleep = 5000;
+        av_log(avctx, AV_LOG_VERBOSE, "Awaiting extradata\n");
+        while (sleep < 500*1000) {
+            // The Qualcomm video encoder doesn't provide extradata immediately,
+            // but by waiting for a small amount of time (in practice, it's
+            // available after less than 1 ms, but start out by sleeping 5 ms).
+            // Prefer awaiting it here, instead of trying to pass it as
+            // side data later, as having it available immediately is compatible
+            // with more consumers.
+            // There doesn't seem to be any event we can wait for to know
+            // exactly when it's available - in particular, running one round
+            // of mf_wait_events isn't enough.
+            av_usleep(sleep);
+            mf_output_type_get(avctx);
+            if (avctx->extradata)
+                break;
+            sleep *= 2;
+        }
+        av_log(avctx, AV_LOG_VERBOSE,
+               "%s extradata\n", avctx->extradata ? "Got" : "Didn't get");
     }
 
     c->lavc_init_done = 1;
