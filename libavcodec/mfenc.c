@@ -516,6 +516,11 @@ static int mf_receive_packet(AVCodecContext *avctx, AVPacket *avpkt)
     ret = mf_sample_to_avpacket(avctx, sample, avpkt);
     IMFSample_Release(sample);
 
+    if (c->is_video && !avctx->extradata) {
+        mf_output_type_get(avctx);
+        av_log(avctx, AV_LOG_WARNING, "Didn't have extradata after init, %s it after encoding a frame\n", avctx->extradata ? "got" : "didn't get");
+    }
+
     if (c->send_extradata) {
         ret = av_packet_add_side_data(avpkt, AV_PKT_DATA_NEW_EXTRADATA,
                                       c->send_extradata,
@@ -1084,9 +1089,13 @@ static int mf_init(AVCodecContext *avctx)
         return AVERROR_EXTERNAL;
     }
 
+    if (avctx->extradata)
+        av_log(avctx, AV_LOG_WARNING, "Got extradata immediately\n");
+    else
+        av_log(avctx, AV_LOG_WARNING, "No extradata right away\n");
     if (avctx->flags & AV_CODEC_FLAG_GLOBAL_HEADER && c->async_events &&
         c->is_video && !avctx->extradata) {
-        int sleep = 5000;
+        int sleep = 5000, i = 1;
         av_log(avctx, AV_LOG_VERBOSE, "Awaiting extradata\n");
         while (sleep < 500*1000) {
             // The Qualcomm video encoder doesn't provide extradata immediately,
@@ -1103,9 +1112,10 @@ static int mf_init(AVCodecContext *avctx)
             if (avctx->extradata)
                 break;
             sleep *= 2;
+            i++;
         }
-        av_log(avctx, AV_LOG_VERBOSE,
-               "%s extradata\n", avctx->extradata ? "Got" : "Didn't get");
+        av_log(avctx, AV_LOG_WARNING,
+               "%s extradata after %d iterations\n", avctx->extradata ? "Got" : "Didn't get", i);
     }
 
     c->lavc_init_done = 1;
