@@ -409,6 +409,7 @@ static int mf_send_frame(AVCodecContext *avctx, const AVFrame *frame)
     int ret;
     IMFSample *sample = NULL;
     if (frame) {
+        av_log(avctx, AV_LOG_WARNING, "input pts %lld\n", frame->pts);
         sample = mf_avframe_to_sample(avctx, frame);
         if (!sample)
             return AVERROR(ENOMEM);
@@ -521,6 +522,7 @@ static int mf_receive_packet(AVCodecContext *avctx, AVPacket *avpkt)
         av_log(avctx, AV_LOG_WARNING, "Didn't have extradata after init, %s it after encoding a frame\n", avctx->extradata ? "got" : "didn't get");
     }
 
+    av_log(avctx, AV_LOG_WARNING, "output pts %lld dts %lld - %d bytes\n", avpkt->pts, avpkt->dts, avpkt->size);
     if (c->send_extradata) {
         ret = av_packet_add_side_data(avpkt, AV_PKT_DATA_NEW_EXTRADATA,
                                       c->send_extradata,
