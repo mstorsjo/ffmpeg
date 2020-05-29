@@ -21,6 +21,10 @@
 
 #include <windows.h>
 #include <initguid.h>
+#include <mfapi.h>
+#include <mferror.h>
+#include <mfobjects.h>
+#include <mftransform.h>
 #ifdef _MSC_VER
 // The official way of including codecapi (via dshow.h) makes the ICodecAPI
 // interface unavailable in UWP mode, but including icodecapi.h + codecapi.h
@@ -30,14 +34,10 @@
 #include <icodecapi.h>
 #else
 #include <dshow.h>
+#endif
 // Older versions of mingw-w64 need codecapi.h explicitly included, while newer
 // ones include it implicitly from dshow.h (via uuids.h).
 #include <codecapi.h>
-#endif
-#include <mfapi.h>
-#include <mferror.h>
-#include <mfobjects.h>
-#include <mftransform.h>
 
 #include "avcodec.h"
 
@@ -129,16 +129,6 @@ enum {
     ff_METransformHaveOutput,
     ff_METransformDrainComplete,
     ff_METransformMarker,
-};
-
-// These do exist in all supported headers, but are manually defined here
-// to avoid having to include codecapi.h, as there's problems including that
-// header when targeting UWP (where including it with MSVC seems to work,
-// but fails when built with clang in MSVC mode).
-enum ff_eAVEncH264VProfile {
-   ff_eAVEncH264VProfile_Base = 66,
-   ff_eAVEncH264VProfile_Main = 77,
-   ff_eAVEncH264VProfile_High = 100,
 };
 
 char *ff_hr_str_buf(char *buf, size_t size, HRESULT hr);
