@@ -77,17 +77,17 @@ static int mf_wait_events(AVCodecContext *avctx)
         }
         IMFMediaEvent_GetType(ev, &ev_id);
         switch (ev_id) {
-        case ff_METransformNeedInput:
+        case METransformNeedInput:
             if (!c->draining)
                 c->async_need_input = 1;
             break;
-        case ff_METransformHaveOutput:
+        case METransformHaveOutput:
             c->async_have_output = 1;
             break;
-        case ff_METransformDrainComplete:
+        case METransformDrainComplete:
             c->draining_done = 1;
             break;
-        case ff_METransformMarker:
+        case METransformMarker:
             c->async_marker = 1;
             break;
         default: ;
@@ -500,7 +500,7 @@ static int mf_receive_packet(AVCodecContext *avctx, AVPacket *avpkt)
         }
         if (c->is_video && c->codec_api) {
             if (c->frame->pict_type == AV_PICTURE_TYPE_I || !c->sample_sent)
-                ICodecAPI_SetValue(c->codec_api, &ff_CODECAPI_AVEncVideoForceKeyFrame, FF_VAL_VT_UI4(1));
+                ICodecAPI_SetValue(c->codec_api, &CODECAPI_AVEncVideoForceKeyFrame, FF_VAL_VT_UI4(1));
         }
     }
 
@@ -677,13 +677,13 @@ static int mf_encv_output_adjust(AVCodecContext *avctx, IMFMediaType *type)
     // Note that some of the ICodecAPI options must be set before SetOutputType.
     if (c->codec_api) {
         if (avctx->bit_rate)
-            ICodecAPI_SetValue(c->codec_api, &ff_CODECAPI_AVEncCommonMeanBitRate, FF_VAL_VT_UI4(avctx->bit_rate));
+            ICodecAPI_SetValue(c->codec_api, &CODECAPI_AVEncCommonMeanBitRate, FF_VAL_VT_UI4(avctx->bit_rate));
 
         if (c->opt_enc_rc >= 0)
-            ICodecAPI_SetValue(c->codec_api, &ff_CODECAPI_AVEncCommonRateControlMode, FF_VAL_VT_UI4(c->opt_enc_rc));
+            ICodecAPI_SetValue(c->codec_api, &CODECAPI_AVEncCommonRateControlMode, FF_VAL_VT_UI4(c->opt_enc_rc));
 
         if (c->opt_enc_quality >= 0)
-            ICodecAPI_SetValue(c->codec_api, &ff_CODECAPI_AVEncCommonQuality, FF_VAL_VT_UI4(c->opt_enc_quality));
+            ICodecAPI_SetValue(c->codec_api, &CODECAPI_AVEncCommonQuality, FF_VAL_VT_UI4(c->opt_enc_quality));
 
         // Always set the number of b-frames. Qualcomm's HEVC encoder on SD835
         // defaults this to 1, and that setting is buggy with many of the
@@ -691,10 +691,10 @@ static int mf_encv_output_adjust(AVCodecContext *avctx, IMFMediaType *type)
         // control modes, but 2 seems buggy with the u_vbr mode.) Setting
         // "scenario" to "camera_record" sets it in CFR mode (where the default
         // is VFR), which makes the encoder avoid dropping frames.
-        ICodecAPI_SetValue(c->codec_api, &ff_CODECAPI_AVEncMPVDefaultBPictureCount, FF_VAL_VT_UI4(avctx->max_b_frames));
+        ICodecAPI_SetValue(c->codec_api, &CODECAPI_AVEncMPVDefaultBPictureCount, FF_VAL_VT_UI4(avctx->max_b_frames));
         avctx->has_b_frames = avctx->max_b_frames > 0;
 
-        ICodecAPI_SetValue(c->codec_api, &ff_CODECAPI_AVEncH264CABACEnable, FF_VAL_VT_BOOL(1));
+        ICodecAPI_SetValue(c->codec_api, &CODECAPI_AVEncH264CABACEnable, FF_VAL_VT_BOOL(1));
 
         if (c->opt_enc_scenario >= 0)
             ICodecAPI_SetValue(c->codec_api, &ff_CODECAPI_AVScenarioInfo, FF_VAL_VT_UI4(c->opt_enc_scenario));
@@ -1180,23 +1180,23 @@ MF_ENCODER(AUDIO, mp3,         MP3, NULL, AFMTS);
 static const AVOption venc_opts[] = {
     {"rate_control",  "Select rate control mode", OFFSET(opt_enc_rc), AV_OPT_TYPE_INT, {.i64 = -1}, -1, INT_MAX, VE, "rate_control"},
     { "default",      "Default mode", 0, AV_OPT_TYPE_CONST, {.i64 = -1}, 0, 0, VE, "rate_control"},
-    { "cbr",          "CBR mode", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVEncCommonRateControlMode_CBR}, 0, 0, VE, "rate_control"},
-    { "pc_vbr",       "Peak constrained VBR mode", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVEncCommonRateControlMode_PeakConstrainedVBR}, 0, 0, VE, "rate_control"},
-    { "u_vbr",        "Unconstrained VBR mode", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVEncCommonRateControlMode_UnconstrainedVBR}, 0, 0, VE, "rate_control"},
-    { "quality",      "Quality mode", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVEncCommonRateControlMode_Quality}, 0, 0, VE, "rate_control" },
+    { "cbr",          "CBR mode", 0, AV_OPT_TYPE_CONST, {.i64 = eAVEncCommonRateControlMode_CBR}, 0, 0, VE, "rate_control"},
+    { "pc_vbr",       "Peak constrained VBR mode", 0, AV_OPT_TYPE_CONST, {.i64 = eAVEncCommonRateControlMode_PeakConstrainedVBR}, 0, 0, VE, "rate_control"},
+    { "u_vbr",        "Unconstrained VBR mode", 0, AV_OPT_TYPE_CONST, {.i64 = eAVEncCommonRateControlMode_UnconstrainedVBR}, 0, 0, VE, "rate_control"},
+    { "quality",      "Quality mode", 0, AV_OPT_TYPE_CONST, {.i64 = eAVEncCommonRateControlMode_Quality}, 0, 0, VE, "rate_control" },
     // The following rate_control modes require Windows 8.
-    { "ld_vbr",       "Low delay VBR mode", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVEncCommonRateControlMode_LowDelayVBR}, 0, 0, VE, "rate_control"},
-    { "g_vbr",        "Global VBR mode", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVEncCommonRateControlMode_GlobalVBR}, 0, 0, VE, "rate_control" },
-    { "gld_vbr",      "Global low delay VBR mode", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVEncCommonRateControlMode_GlobalLowDelayVBR}, 0, 0, VE, "rate_control"},
+    { "ld_vbr",       "Low delay VBR mode", 0, AV_OPT_TYPE_CONST, {.i64 = eAVEncCommonRateControlMode_LowDelayVBR}, 0, 0, VE, "rate_control"},
+    { "g_vbr",        "Global VBR mode", 0, AV_OPT_TYPE_CONST, {.i64 = eAVEncCommonRateControlMode_GlobalVBR}, 0, 0, VE, "rate_control" },
+    { "gld_vbr",      "Global low delay VBR mode", 0, AV_OPT_TYPE_CONST, {.i64 = eAVEncCommonRateControlMode_GlobalLowDelayVBR}, 0, 0, VE, "rate_control"},
 
     {"scenario",          "Select usage scenario", OFFSET(opt_enc_scenario), AV_OPT_TYPE_INT, {.i64 = -1}, -1, INT_MAX, VE, "scenario"},
     { "default",          "Default scenario", 0, AV_OPT_TYPE_CONST, {.i64 = -1}, 0, 0, VE, "scenario"},
-    { "display_remoting", "Display remoting", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVScenarioInfo_DisplayRemoting}, 0, 0, VE, "scenario"},
-    { "video_conference", "Video conference", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVScenarioInfo_VideoConference}, 0, 0, VE, "scenario"},
-    { "archive",          "Archive", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVScenarioInfo_Archive}, 0, 0, VE, "scenario"},
-    { "live_streaming",   "Live streaming", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVScenarioInfo_LiveStreaming}, 0, 0, VE, "scenario"},
-    { "camera_record",    "Camera record", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVScenarioInfo_CameraRecord}, 0, 0, VE, "scenario"},
-    { "display_remoting_with_feature_map", "Display remoting with feature map", 0, AV_OPT_TYPE_CONST, {.i64 = ff_eAVScenarioInfo_DisplayRemotingWithFeatureMap}, 0, 0, VE, "scenario"},
+    { "display_remoting", "Display remoting", 0, AV_OPT_TYPE_CONST, {.i64 = eAVScenarioInfo_DisplayRemoting}, 0, 0, VE, "scenario"},
+    { "video_conference", "Video conference", 0, AV_OPT_TYPE_CONST, {.i64 = eAVScenarioInfo_VideoConference}, 0, 0, VE, "scenario"},
+    { "archive",          "Archive", 0, AV_OPT_TYPE_CONST, {.i64 = eAVScenarioInfo_Archive}, 0, 0, VE, "scenario"},
+    { "live_streaming",   "Live streaming", 0, AV_OPT_TYPE_CONST, {.i64 = eAVScenarioInfo_LiveStreaming}, 0, 0, VE, "scenario"},
+    { "camera_record",    "Camera record", 0, AV_OPT_TYPE_CONST, {.i64 = eAVScenarioInfo_CameraRecord}, 0, 0, VE, "scenario"},
+    { "display_remoting_with_feature_map", "Display remoting with feature map", 0, AV_OPT_TYPE_CONST, {.i64 = eAVScenarioInfo_DisplayRemotingWithFeatureMap}, 0, 0, VE, "scenario"},
 
     {"quality",       "Quality", OFFSET(opt_enc_quality), AV_OPT_TYPE_INT, {.i64 = -1}, -1, 100, VE},
     {"hw_encoding",   "Force hardware encoding", OFFSET(opt_enc_hw), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, VE},
