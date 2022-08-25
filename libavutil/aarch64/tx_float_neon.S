@@ -69,7 +69,7 @@ endconst
         ldp             q\dst3\(), q\dst4\(), [\src\(), #32]
         add             \src\(), \src\(), #64
 .else
-        ld1             { v\dst1\().4s, v\dst2\().4s, v\dst3\().4s, v\dst4\().4s }, [\src\()], #64
+        ld1             { v\dst1\().4s, v\dst2\().4s, v\dst3\().4s, v\dst4\().4s }, [\src], #64
 .endif
 .else
         ldp             w10, w11, [x4, #0 ]
@@ -79,14 +79,14 @@ endconst
 
         add             x4, x4, #32
 
-        ldr             d\dst1\(), [\src\(), x10, lsl #3]
-        add             x11, \src\(), x11, lsl #3
-        ldr             d\dst2\(), [\src\(), x12, lsl #3]
-        add             x13, \src\(), x13, lsl #3
-        ldr             d\dst3\(), [\src\(), x14, lsl #3]
-        add             x15, \src\(), x15, lsl #3
-        ldr             d\dst4\(), [\src\(), x16, lsl #3]
-        add             x17, \src\(), x17, lsl #3
+        ldr             d\dst1, [\src, x10, lsl #3]
+        add             x11, \src, x11, lsl #3
+        ldr             d\dst2, [\src, x12, lsl #3]
+        add             x13, \src, x13, lsl #3
+        ldr             d\dst3, [\src, x14, lsl #3]
+        add             x15, \src, x15, lsl #3
+        ldr             d\dst4, [\src, x16, lsl #3]
+        add             x17, \src, x17, lsl #3
 
         ld1             { v\dst1\().d }[1], [x11]
         ld1             { v\dst2\().d }[1], [x13]
@@ -456,9 +456,9 @@ FFT16_FN ns_float, 1
 
 .macro SETUP_SR_RECOMB len, re, im, dec
         ldr             w5, =(\len - 4*7)
-        movrel          \re\(), X(ff_tx_tab_\len\()_float)
-        add             \im\(), \re\(), x5
-        mov             \dec\(), #-32
+        movrel          \re, X(ff_tx_tab_\len\()_float)
+        add             \im, \re, x5
+        mov             \dec, #-32
 
 .if \len > 32
         mov             x21, #2*\len
@@ -472,8 +472,8 @@ FFT16_FN ns_float, 1
                   t0=v16, t1=v17, t2=v18, t3=v19, t4=v20, t5=v21, \
                   t6=v22, t7=v23, t8=v24, t9=v25, ta=v26, tb=v27
 
-        ld1             { \t8\().4s, \t9\().4s }, [\im\()], \dec
-        ld1             { \t0\().4s, \t1\().4s }, [\re\()], #32
+        ld1             { \t8\().4s, \t9\().4s }, [\im], \dec
+        ld1             { \t0\().4s, \t1\().4s }, [\re], #32
 
 .if \swap_im == 1
         ext             \t2\().16b, \t9\().16b, \t9\().16b, #8
@@ -485,8 +485,8 @@ FFT16_FN ns_float, 1
 
 .if \is_last == 0
         //TODO: experiment with prefetching
-        prfm            pldl1strm, [\im\()]
-        prfm            pldl1strm, [\re\()]
+        prfm            pldl1strm, [\im]
+        prfm            pldl1strm, [\re]
 .endif
 
         trn1            \t4\().4s, \t0\().4s, \t0\().4s      // cos0022
@@ -769,10 +769,10 @@ FFT16_FN ns_float, 1
         add              x11, x1, x21, lsl #1
         add              x12, x1, x22
 
-        SR_COMBINE_4    \len\(), 0, \off\()
-        SR_COMBINE_4    \len\(), 1, \off\()
-        SR_COMBINE_4    \len\(), 4, \off\()
-        SR_COMBINE_4    \len\(), 5, \off\()
+        SR_COMBINE_4    \len, 0, \off
+        SR_COMBINE_4    \len, 1, \off
+        SR_COMBINE_4    \len, 4, \off
+        SR_COMBINE_4    \len, 5, \off
 .endm
 
 .macro SR_COMBINE_D2 part, off
@@ -866,8 +866,8 @@ FFT16_FN ns_float, 1
         add             x15, x1, x21, lsl #1
         add             x16, x1, x22
 
-        SR_COMBINE_D2   0, \off\()
-        SR_COMBINE_D2   4, \off\()
+        SR_COMBINE_D2   0, \off
+        SR_COMBINE_D2   4, \off
 .endm
 
 .macro FFT32_FN name, no_perm
@@ -939,28 +939,28 @@ FFT32_FN ns_float, 1
 .endm
 
 .macro SR_TRANSFORM_DEF len, next=0
-\len\():
+\len:
         stp             x20, x30, [sp, #-16]!
-        mov             w20, #(\len\()/4)
-        mov             x5, #((\len\()*4) - (\len\()/1))
+        mov             w20, #(\len/4)
+        mov             x5, #((\len*4) - (\len/1))
         add             x1, x1, x5
         bl              32b
-        mov             x5, #((\len\()*2) - (\len\()/2))
+        mov             x5, #((\len*2) - (\len/2))
         add             x1, x1, x5
         bl              32b
         ldp             x20, x30, [sp], #16
         ldr             w5, =(\len*6 + \len/2)
         sub             x1, x1, x5
 
-        SETUP_SR_RECOMB \len\(), x7, x8, x9
+        SETUP_SR_RECOMB \len, x7, x8, x9
 
 .if \next\() != 0
         cmp_imm         w19, \len
         b.eq            0f
 
-        mov             w5, #(\len\()/128)
+        mov             w5, #(\len/128)
 \len\()5:
-        SR_COMBINE_FULL \len\()
+        SR_COMBINE_FULL \len
         add             x1, x1, 8*32
         subs            w5, w5, 1
         b.gt            \len\()5b
