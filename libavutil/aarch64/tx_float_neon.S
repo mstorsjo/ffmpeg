@@ -932,6 +932,22 @@ endfunc
 FFT32_FN float,    0
 FFT32_FN ns_float, 1
 
+.macro add_imm r0, r1, imm
+.if \imm >= 4096
+        add             \r0, \r1, #((\imm)/4096), lsl #12
+.else
+        add             \r0, \r1, #(\imm)
+.endif
+.endm
+
+.macro cmp_imm reg, imm
+.if \imm >= 4096
+        cmp             \reg, #((\imm)/4096), lsl #12
+.else
+        cmp             \reg, #(\imm)
+.endif
+.endm
+
 .macro SR_TRANSFORM_DEF len, next=0
 \len\():
         stp             x20, x30, [sp, #-16]!
@@ -945,14 +961,14 @@ FFT32_FN ns_float, 1
         ldp             x20, x30, [sp], #16
         // Toy ISA
         mov             x5, #(\len\()*4)
-        add             x5, x5, #(\len\()*2)
-        add             x5, x5, #(\len\()/2)
+        add_imm         x5, x5, \len*2
+        add_imm         x5, x5, \len/2
         sub             x1, x1, x5
 
         SETUP_SR_RECOMB \len\(), x7, x8, x9
 
 .if \next\() != 0
-        cmp             w19, #(\len\())
+        cmp_imm         w19, \len
         b.eq            0f
 
         mov             w5, #(\len\()/128)
@@ -962,7 +978,7 @@ FFT32_FN ns_float, 1
         subs            w5, w5, 1
         b.gt            \len\()5b
 
-        cmp             w20, #\len\()
+        cmp_imm         w20, \len
         b.gt            \next\()f
         ret
 .endif
