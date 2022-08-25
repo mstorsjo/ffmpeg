@@ -79,14 +79,14 @@ endconst
 
         add             x4, x4, #32
 
-        ldr             d\dst1\(), [\src\(), x10, lsl 3]
-        add             x11, \src\(), x11, lsl 3
-        ldr             d\dst2\(), [\src\(), x12, lsl 3]
-        add             x13, \src\(), x13, lsl 3
-        ldr             d\dst3\(), [\src\(), x14, lsl 3]
-        add             x15, \src\(), x15, lsl 3
-        ldr             d\dst4\(), [\src\(), x16, lsl 3]
-        add             x17, \src\(), x17, lsl 3
+        ldr             d\dst1\(), [\src\(), x10, lsl #3]
+        add             x11, \src\(), x11, lsl #3
+        ldr             d\dst2\(), [\src\(), x12, lsl #3]
+        add             x13, \src\(), x13, lsl #3
+        ldr             d\dst3\(), [\src\(), x14, lsl #3]
+        add             x15, \src\(), x15, lsl #3
+        ldr             d\dst4\(), [\src\(), x16, lsl #3]
+        add             x17, \src\(), x17, lsl #3
 
         ld1             { v\dst1\().d }[1], [x11]
         ld1             { v\dst2\().d }[1], [x13]
