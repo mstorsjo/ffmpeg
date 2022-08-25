@@ -109,7 +109,7 @@ endconst
         fadd            \e0\().4s, v17.4s, \o0\().4s         // a1,2 b1,4
         fsub            v16.4s,    v17.4s, \o0\().4s         // a3,4 b3,2
 
-        mov             \o0\().4s, v16.4s                    // Swap once again...
+        mov             \o0\().16b, v16.16b                  // Swap once again...
         mov             \o0\().s[3], \e0\().s[3]
         mov             \e0\().s[3], v16.s[3]
 
@@ -348,8 +348,8 @@ endconst
         fmul            \t1\().4s, \o2\().4s, \t6\().4s          // s[4567] * mult
         fmul            \t0\().4s, \o0\().4s, \t6\().4s          // s[0123] * mult
 
-        mov             \o1\().4s, \t3\().4s
-        mov             \o2\().4s, \t1\().4s
+        mov             \o1\().16b, \t3\().16b
+        mov             \o2\().16b, \t1\().16b
 
         fsub            \t3\().4s, \t3\().4s, \t2\().4s          // y34, u34
         fsub            \t1\().4s, \t1\().4s, \t0\().4s          // w34, x34
@@ -730,7 +730,7 @@ FFT16_FN ns_float, 1
         fsub            \e3\().4s, \e3\().4s, \t1\().4s
 .endif
 
-        mov             \t1\().4s, \o0\().4s
+        mov             \t1\().16b, \o0\().16b
 
         fsub            \o0\().4s, \e0\().4s, \t1\().4s
         fadd            \e0\().4s, \e0\().4s, \t1\().4s
@@ -1222,8 +1222,8 @@ SR_TRANSFORM_DEF        131072
         zip1            v29.2d, v9.2d, v21.2d
         zip2            v30.2d, v9.2d, v21.2d
 
-        mov             v20.4s, v5.4s
-        mov             v21.4s, v7.4s
+        mov             v20.16b, v5.16b
+        mov             v21.16b, v7.16b
         mov             x12, x1
         add             x13, x1, #32* 4
         add             x14, x1, #32* 8
