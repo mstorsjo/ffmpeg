@@ -455,9 +455,7 @@ FFT16_FN float,    0
 FFT16_FN ns_float, 1
 
 .macro SETUP_SR_RECOMB len, re, im, dec
-        // Toy ISA
-        mov             x5, #(\len\())
-        sub             x5, x5, #4*7
+        ldr             w5, =(\len - 4*7)
         movrel          \re\(), X(ff_tx_tab_\len\()_float)
         add             \im\(), \re\(), x5
         mov             \dec\(), #-32
@@ -932,14 +930,6 @@ endfunc
 FFT32_FN float,    0
 FFT32_FN ns_float, 1
 
-.macro add_imm r0, r1, imm
-.if \imm >= 4096
-        add             \r0, \r1, #((\imm)/4096), lsl #12
-.else
-        add             \r0, \r1, #(\imm)
-.endif
-.endm
-
 .macro cmp_imm reg, imm
 .if \imm >= 4096
         cmp             \reg, #((\imm)/4096), lsl #12
@@ -959,10 +949,7 @@ FFT32_FN ns_float, 1
         add             x1, x1, x5
         bl              32b
         ldp             x20, x30, [sp], #16
-        // Toy ISA
-        mov             x5, #(\len\()*4)
-        add_imm         x5, x5, \len*2
-        add_imm         x5, x5, \len/2
+        ldr             w5, =(\len*6 + \len/2)
         sub             x1, x1, x5
 
         SETUP_SR_RECOMB \len\(), x7, x8, x9
