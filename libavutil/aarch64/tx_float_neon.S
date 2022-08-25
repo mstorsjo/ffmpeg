@@ -483,12 +483,6 @@ FFT16_FN ns_float, 1
         ext             \t3\().16b, \t9\().16b, \t9\().16b, #8
 .endif
 
-.if \is_last == 0
-        //TODO: experiment with prefetching
-        prfm            pldl1strm, [\im]
-        prfm            pldl1strm, [\re]
-.endif
-
         trn1            \t4\().4s, \t0\().4s, \t0\().4s      // cos0022
         trn2            \t0\().4s, \t0\().4s, \t0\().4s      // cos4466
         trn1            \t5\().4s, \t1\().4s, \t1\().4s      // cos1133
