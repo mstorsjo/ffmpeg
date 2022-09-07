@@ -160,6 +160,7 @@ tests/data/audio_shorter_than_video.nut: tests/data/vsynth_lena.yuv
 tests/data/audio_shorter_than_video.nut: ffmpeg$(PROGSSUF)$(EXESUF) | tests/data
 	$(M)$(TARGET_EXEC) $(TARGET_PATH)/$< -nostdin \
         -sws_flags +accurate_rnd+bitexact -fflags +bitexact -flags +bitexact -idct simple -f rawvideo -s 352x288 -pix_fmt yuv420p -i $(TARGET_PATH)/tests/data/vsynth_lena.yuv \
+	-lavfi_threads 1 \
         -f lavfi -i "sine=1000:d=1" \
         -sws_flags +accurate_rnd+bitexact -fflags +bitexact -flags +bitexact -idct simple -dct fastint -qscale 10 -c:v mpeg4 -threads 1 -c:a pcm_s16le -bitexact \
         -y $(TARGET_PATH)/tests/data/audio_shorter_than_video.nut 2>/dev/null

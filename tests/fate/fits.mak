@@ -1,6 +1,7 @@
 tests/data/fits-multi.fits: TAG = GEN
 tests/data/fits-multi.fits: ffmpeg$(PROGSSUF)$(EXESUF) | tests/data
 	$(M)$(TARGET_EXEC) $(TARGET_PATH)/$< -nostdin \
+	-filter_threads 1 \
         -i $(TARGET_SAMPLES)/gif/m4nb.gif \
         -y $(TARGET_PATH)/$(@) 2>/dev/null
 

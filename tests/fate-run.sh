@@ -127,10 +127,26 @@ probegaplessinfo(){
 
 ffmpeg(){
     dec_opts="-hwaccel $hwaccel -threads $threads -thread_type $thread_type"
-    ffmpeg_args="-nostdin -nostats -noauto_conversion_filters -cpuflags $cpuflags"
+    enc_opts="-threads $threads -thread_type $thread_type"
+    ffmpeg_args="-nostdin -nostats -noauto_conversion_filters -cpuflags $cpuflags -filter_threads $threads -filter_complex_threads $threads"
+    unset prev_i
+    unset prev_f
     for arg in $@; do
         [ x${arg} = x-i ] && ffmpeg_args="${ffmpeg_args} ${dec_opts}"
+        [ x${arg} = x-lavfi ] && ffmpeg_args="${ffmpeg_args} ${enc_opts}"
+        [ x${arg} = x-filter_complex ] && ffmpeg_args="${ffmpeg_args} ${enc_opts}"
+        [ x${arg} = x-filter_complex_script ] && ffmpeg_args="${ffmpeg_args} ${enc_opts}"
         ffmpeg_args="${ffmpeg_args} ${arg}"
+        if [ x${prev_i} = x1 ]; then
+            ffmpeg_args="${ffmpeg_args} ${enc_opts}"
+            unset prev_i
+        fi
+        if [ x${prev_f} = x1 ]; then
+            [ x${arg} = xlavfi ] && ffmpeg_args="${ffmpeg_args} -lavfi_threads $threads"
+            unset prev_f
+        fi
+        [ x${arg} = x-i ] && prev_i=1
+        [ x${arg} = x-f ] && prev_f=1
     done
     run ffmpeg${PROGSUF}${EXECSUF} ${ffmpeg_args}
 }
@@ -194,7 +210,7 @@ enc_dec_pcm(){
     ffmpeg -auto_conversion_filters -bitexact -i ${encfile} -c:a pcm_${pcm_fmt} -fflags +bitexact -f ${dec_fmt} -
 }
 
-FLAGS="-flags +bitexact -sws_flags +accurate_rnd+bitexact -fflags +bitexact"
+FLAGS="-flags +bitexact -sws_flags +accurate_rnd+bitexact -fflags +bitexact -filter_threads $threads -filter_complex_threads $threads"
 DEC_OPTS="-threads $threads -thread_type $thread_type -idct simple $FLAGS"
 ENC_OPTS="-threads 1        -idct simple -dct fastint"
 
@@ -293,7 +309,7 @@ echov(){
     echo "$@" >&3
 }
 
-AVCONV_OPTS="-nostdin -nostats -noauto_conversion_filters -y -cpuflags $cpuflags -filter_threads $threads"
+AVCONV_OPTS="-nostdin -nostats -noauto_conversion_filters -y -cpuflags $cpuflags -filter_threads $threads -filter_complex_threads $threads"
 COMMON_OPTS="-flags +bitexact -idct simple -sws_flags +accurate_rnd+bitexact -fflags +bitexact"
 DEC_OPTS="$COMMON_OPTS -threads $threads"
 ENC_OPTS="$COMMON_OPTS -threads 1 -dct fastint"
@@ -336,7 +352,7 @@ lavf_container(){
     test "$keep" -ge 1 || cleanfiles="$cleanfiles $file"
     do_avconv $file -auto_conversion_filters $DEC_OPTS -f image2 -c:v pgmyuv -i $raw_src $DEC_OPTS -ar 44100 -f s16le $1 -i $pcm_src "$ENC_OPTS -metadata title=lavftest" -b:a 64k -t 1 -qscale:v 10 $2
     test "$3" = "disable_crc" ||
-        do_avconv_crc $file -auto_conversion_filters $DEC_OPTS -i $target_path/$file $3
+        do_avconv_crc $file -auto_conversion_filters $DEC_OPTS -i $target_path/$file $ENC_OPTS $3
 }
 
 lavf_container_attach() {          lavf_container "" "$1 -attach ${raw_src%/*}/00.pgm -metadata:s:t mimetype=image/x-portable-greymap"; }
@@ -358,7 +374,7 @@ lavf_container_fate()
     cleanfiles="$cleanfiles $file"
     input="${target_samples}/$1"
     do_avconv $file -auto_conversion_filters $DEC_OPTS $2 -i "$input" "$ENC_OPTS -metadata title=lavftest" -vcodec copy -acodec copy
-    do_avconv_crc $file -auto_conversion_filters $DEC_OPTS -i $target_path/$file $3
+    do_avconv_crc $file -auto_conversion_filters $DEC_OPTS -i $target_path/$file $3 $ENC_OPTS
 }
 
 lavf_image(){
@@ -379,7 +395,7 @@ lavf_image(){
         do_md5sum ${outdir}/02.$t
         echo $(wc -c ${outdir}/02.$t)
     fi
-    do_avconv_crc $file -auto_conversion_filters $DEC_OPTS $2 -i $target_path/$file $2
+    do_avconv_crc $file -auto_conversion_filters $DEC_OPTS $2 -i $target_path/$file $2 $ENC_OPTS
 }
 
 lavf_image2pipe(){
@@ -388,7 +404,7 @@ lavf_image2pipe(){
     outdir="tests/data/lavf"
     file=${outdir}/${t}pipe.$t
     do_avconv $file -auto_conversion_filters $DEC_OPTS -f image2 -c:v pgmyuv -i $raw_src -f image2pipe "$ENC_OPTS -metadata title=lavftest" -t 1 -qscale 10
-    do_avconv_crc $file -auto_conversion_filters $DEC_OPTS -f image2pipe -i $target_path/$file
+    do_avconv_crc $file -auto_conversion_filters $DEC_OPTS -f image2pipe -i $target_path/$file $ENC_OPTS
 }
 
 lavf_video(){
@@ -397,7 +413,7 @@ lavf_video(){
     file=${outdir}/lavf.$t
     test "$keep" -ge 1 || cleanfiles="$cleanfiles $file"
     do_avconv $file -auto_conversion_filters $DEC_OPTS -f image2 -c:v pgmyuv -i $raw_src "$ENC_OPTS -metadata title=lavftest" -t 1 -qscale 10 $1 $2
-    do_avconv_crc $file -auto_conversion_filters $DEC_OPTS -i $target_path/$file $1
+    do_avconv_crc $file -auto_conversion_filters $DEC_OPTS -i $target_path/$file $1 $ENC_OPTS
 }
 
 refcmp_metadata(){
