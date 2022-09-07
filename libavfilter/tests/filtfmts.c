@@ -109,6 +109,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    graph_ctx->nb_threads = 1;
     /* open filter and add it to the graph */
     if (!(filter_ctx = avfilter_graph_alloc_filter(graph_ctx, filter, filter_name))) {
         fprintf(stderr, "Impossible to open filter with name '%s'\n",
