@@ -106,6 +106,7 @@ int avpriv_slicethread_create(AVSliceThread **pctx, void *priv,
     av_assert0(nb_threads >= 0);
     if (!nb_threads) {
         int nb_cpus = av_cpu_count();
+        abort();
         if (nb_cpus > 1)
             nb_threads = FFMIN(nb_cpus + 1, MAX_AUTO_THREADS);
         else

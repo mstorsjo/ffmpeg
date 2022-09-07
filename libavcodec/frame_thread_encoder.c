@@ -183,6 +183,7 @@ av_cold int ff_frame_thread_encoder_init(AVCodecContext *avctx)
 
     if(!avctx->thread_count) {
         avctx->thread_count = av_cpu_count();
+        abort();
         avctx->thread_count = FFMIN(avctx->thread_count, MAX_THREADS);
     }
 

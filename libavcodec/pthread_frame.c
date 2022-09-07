@@ -872,6 +872,7 @@ int ff_frame_thread_init(AVCodecContext *avctx)
 
     if (!thread_count) {
         int nb_cpus = av_cpu_count();
+        abort();
         // use number of cores + 1 as thread count if there is more than one
         if (nb_cpus > 1)
             thread_count = avctx->thread_count = FFMIN(nb_cpus + 1, MAX_AUTO_THREADS);

@@ -145,6 +145,7 @@ int ff_slice_thread_init(AVCodecContext *avctx)
 
     if (!thread_count) {
         int nb_cpus = av_cpu_count();
+        abort();
         if  (avctx->height)
             nb_cpus = FFMIN(nb_cpus, (avctx->height+15)/16);
         // use number of cores + 1 as thread count if there is more than one
