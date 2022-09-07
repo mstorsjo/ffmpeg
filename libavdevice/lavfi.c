@@ -48,6 +48,7 @@ typedef struct {
     char          *graph_str;
     char          *graph_filename;
     char          *dump_graph;
+    int            threads;
     AVFilterGraph *graph;
     AVFilterContext **sinks;
     int *sink_stream_map;
@@ -143,6 +144,9 @@ av_cold static int lavfi_read_header(AVFormatContext *avctx)
     /* parse the graph, create a stream for each open output */
     if (!(lavfi->graph = avfilter_graph_alloc()))
         FAIL(AVERROR(ENOMEM));
+
+    av_opt_set_int(lavfi->graph, "threads", lavfi->threads, 0);
+    lavfi->graph->nb_threads = lavfi->threads;
 
     if ((ret = avfilter_graph_parse_ptr(lavfi->graph, lavfi->graph_str,
                                     &input_links, &output_links, avctx)) < 0)
@@ -470,6 +474,7 @@ static const AVOption options[] = {
     { "graph",     "set libavfilter graph", OFFSET(graph_str),  AV_OPT_TYPE_STRING, {.str = NULL}, 0, 0, DEC },
     { "graph_file","set libavfilter graph filename", OFFSET(graph_filename), AV_OPT_TYPE_STRING, {.str = NULL}, 0, 0, DEC},
     { "dumpgraph", "dump graph to stderr",  OFFSET(dump_graph), AV_OPT_TYPE_STRING, {.str = NULL}, 0, 0, DEC },
+    { "lavfi_threads", "threads",  OFFSET(threads), AV_OPT_TYPE_INT, {.i64 = 0}, 0, INT_MAX, DEC },
     { NULL },
 };
 
