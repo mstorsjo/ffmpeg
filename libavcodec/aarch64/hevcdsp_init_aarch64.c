@@ -163,7 +163,6 @@ NEON8_FNPROTO_PARTIAL_4(qpel_uni_w_v, (uint8_t *_dst,  ptrdiff_t _dststride,
         int height, int denom, int wx, int ox,
         intptr_t mx, intptr_t my, int width),);
 
-#if defined(__ARM_FEATURE_I8MM)
 NEON8_FNPROTO(qpel_h, (int16_t *dst,
         const uint8_t *_src, ptrdiff_t _srcstride,
         int height, intptr_t mx, intptr_t my, int width), _dotprod);
@@ -177,8 +176,6 @@ NEON8_FNPROTO_PARTIAL_5(qpel_uni_w_hv, (uint8_t *_dst,  ptrdiff_t _dststride,
         const uint8_t *_src, ptrdiff_t _srcstride,
         int height, int denom, int wx, int ox,
         intptr_t mx, intptr_t my, int width), _dotprod);
-
-#endif
 
 #define NEON8_FNASSIGN(member, v, h, fn, ext) \
         member[1][v][h] = ff_hevc_put_hevc_##fn##4_8_neon##ext;  \
@@ -208,7 +205,8 @@ NEON8_FNPROTO_PARTIAL_5(qpel_uni_w_hv, (uint8_t *_dst,  ptrdiff_t _dststride,
 
 av_cold void ff_hevc_dsp_init_aarch64(HEVCDSPContext *c, const int bit_depth)
 {
-    if (!have_neon(av_get_cpu_flags())) return;
+    int cpu_flags = av_get_cpu_flags();
+    if (!have_neon(cpu_flags)) return;
 
     if (bit_depth == 8) {
         c->hevc_h_loop_filter_chroma   = ff_hevc_h_loop_filter_chroma_8_neon;
@@ -268,12 +266,11 @@ av_cold void ff_hevc_dsp_init_aarch64(HEVCDSPContext *c, const int bit_depth)
         NEON8_FNASSIGN(c->put_hevc_qpel_uni_w, 0, 0, pel_uni_w_pixels,);
         NEON8_FNASSIGN_PARTIAL_4(c->put_hevc_qpel_uni_w, 1, 0, qpel_uni_w_v,);
 
-    #if defined(__ARM_FEATURE_I8MM)
-        NEON8_FNASSIGN(c->put_hevc_qpel, 0, 1, qpel_h, _dotprod);
-        NEON8_FNASSIGN(c->put_hevc_qpel_uni_w, 0, 1, qpel_uni_w_h, _dotprod);
-        NEON8_FNASSIGN_PARTIAL_5(c->put_hevc_qpel_uni_w, 1, 1, qpel_uni_w_hv, _dotprod);
-
-    #endif
+        if (have_i8mm(cpu_flags)) {
+            NEON8_FNASSIGN(c->put_hevc_qpel, 0, 1, qpel_h, _dotprod);
+            NEON8_FNASSIGN(c->put_hevc_qpel_uni_w, 0, 1, qpel_uni_w_h, _dotprod);
+            NEON8_FNASSIGN_PARTIAL_5(c->put_hevc_qpel_uni_w, 1, 1, qpel_uni_w_hv, _dotprod);
+        }
     }
     if (bit_depth == 10) {
         c->hevc_h_loop_filter_chroma   = ff_hevc_h_loop_filter_chroma_10_neon;

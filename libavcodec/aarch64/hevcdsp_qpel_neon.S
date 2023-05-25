@@ -1193,7 +1193,7 @@ function ff_hevc_put_hevc_qpel_uni_w_v64_8_neon, export=1
         ret
 endfunc
 
-#if defined(__ARM_FEATURE_I8MM)
+#if HAVE_I8MM
 .macro QPEL_UNI_W_H_HEADER
         ldr             x12, [sp]
         sub             x2, x2, #3
@@ -2704,5 +2704,5 @@ function ff_hevc_put_hevc_qpel_uni_w_hv64_8_neon_dotprod, export=1
         ret
 endfunc
 
-#endif // __ARM_FEATURE_I8MM
+#endif // HAVE_I8MM
 
