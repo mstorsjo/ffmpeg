@@ -454,6 +454,8 @@ Optimization options (experts only):
   --disable-armv6t2        disable armv6t2 optimizations
   --disable-vfp            disable VFP optimizations
   --disable-neon           disable NEON optimizations
+  --disable-dotprod        disable DOTPROD optimizations
+  --disable-i8mm           disable I8MM optimizations
   --disable-inline-asm     disable use of inline assembly
   --disable-x86asm         disable use of standalone x86 assembly
   --disable-mipsdsp        disable MIPS DSP ASE R1 optimizations
@@ -1152,6 +1154,41 @@ check_insn(){
     log check_insn "$@"
     check_inline_asm ${1}_inline "\"$2\""
     check_as ${1}_external "$2"
+}
+
+check_archext_insn(){
+    log check_archext_insn "$@"
+    feature="$1"
+    base_arch="$2"
+    archext="$3"
+    instr="$4"
+    # Check if the assembly is accepted unconditionally in either inline or
+    # external assembly.
+    check_inline_asm ${feature}_inline "\"$instr\""
+    check_as ${feature}_external "$instr"
+
+    enabled_any ${feature}_inline ${feature}_external || disable ${feature}
+
+    if disabled ${feature}_external; then
+        # If not accepted unconditionally, check if we can assemble it
+        # with a suitable .arch_extension directive.
+        test_as <<EOF && enable ${feature} as_archext_${archext}_directive
+.arch_extension $archext
+$instr
+EOF
+        if disabled ${feature}; then
+            # If the base arch level is too low, .arch_extension can require setting
+            # a higher arch level with .arch too. Only do this if strictly needed;
+            # if the base level is e.g. arvm8.4-a and some features are available
+            # without any .arch_extension, we don't want to set ".arch armv8.2-a"
+            # for some other .arch_extension.
+            test_as <<EOF && enable ${feature} as_archext_${archext}_directive as_archext_${archext}_needs_arch
+.arch $base_arch
+.arch_extension $archext
+$instr
+EOF
+        fi
+    fi
 }
 
 check_x86asm(){
@@ -2059,6 +2096,8 @@ ARCH_EXT_LIST_ARM="
     armv6
     armv6t2
     armv8
+    dotprod
+    i8mm
     neon
     vfp
     vfpv3
@@ -2322,6 +2361,10 @@ SYSTEM_LIBRARIES="
 
 TOOLCHAIN_FEATURES="
     as_arch_directive
+    as_archext_dotprod_directive
+    as_archext_dotprod_needs_arch
+    as_archext_i8mm_directive
+    as_archext_i8mm_needs_arch
     as_dn_directive
     as_fpu_directive
     as_func
@@ -2622,6 +2665,8 @@ intrinsics_neon_deps="neon"
 vfp_deps_any="aarch64 arm"
 vfpv3_deps="vfp"
 setend_deps="arm"
+dotprod_deps="aarch64 neon"
+i8mm_deps="aarch64 neon"
 
 map 'eval ${v}_inline_deps=inline_asm' $ARCH_EXT_LIST_ARM
 
@@ -5979,12 +6024,26 @@ check_inline_asm inline_asm_labels '"1:\n"'
 check_inline_asm inline_asm_nonlocal_labels '"Label:\n"'
 
 if enabled aarch64; then
+    check_as as_arch_directive ".arch armv8.2-a"
+
     enabled armv8 && check_insn armv8 'prfm   pldl1strm, [x0]'
     # internal assembler in clang 3.3 does not support this instruction
     enabled neon && check_insn neon 'ext   v0.8B, v0.8B, v1.8B, #1'
     enabled vfp  && check_insn vfp  'fmadd d0,    d0,    d1,    d2'
 
-    map 'enabled_any ${v}_external ${v}_inline || disable $v' $ARCH_EXT_LIST_ARM
+    archext_list="dotprod i8mm"
+    enabled dotprod && check_archext_insn dotprod armv8.2-a dotprod 'udot v0.4s, v0.16b, v0.16b'
+    enabled i8mm    && check_archext_insn i8mm    armv8.2-a i8mm    'usdot v0.4s, v0.16b, v0.16b'
+
+    # Disable the main feature (e.g. HAVE_NEON) if neither inline nor external
+    # assembly support the feature out of the box. Skip this for the features
+    # checked with check_archext_insn above; they are checked separately whether
+    # they can be built out of the box or enabled with an .arch_extension
+    # flag.
+    for v in $ARCH_EXT_LIST_ARM; do
+        is_in $v $archext_list && continue
+        enabled_any ${v}_external ${v}_inline || disable $v
+    done
 
 elif enabled alpha; then
 
@@ -6013,6 +6072,12 @@ EOF
         warn "Compiler does not indicate floating-point ABI, guessing $fpabi."
     fi
 
+    # Test for various instruction sets, testing support both in inline and
+    # external assembly. This sets the ${v}_inline or ${v}_external flags
+    # if the instruction can be used unconditionally in either inline or
+    # external assembly. This means that if the ${v}_external feature is set,
+    # that feature can be used unconditionally in various support macros
+    # anywhere in external assembly, in any function.
     enabled armv5te && check_insn armv5te 'qadd r0, r0, r0'
     enabled armv6   && check_insn armv6   'sadd16 r0, r0, r0'
     enabled armv6t2 && check_insn armv6t2 'movt r0, #0'
@@ -6021,6 +6086,14 @@ EOF
     enabled vfpv3   && check_insn vfpv3   'vmov.f32 s0, #1.0'
     enabled setend  && check_insn setend  'setend be'
 
+    # If neither inline nor external assembly can use the feature by default,
+    # disable the main unsuffixed feature (e.g. HAVE_NEON).
+    #
+    # For targets that support runtime CPU feature detection, don't disable
+    # the main feature flag - there we assume that all supported toolchains
+    # can assemble code for all instruction set features (e.g. NEON) with
+    # suitable assembly flags (such as ".fpu neon"); we don't check
+    # specifically that they really do.
     [ $target_os = linux ] || [ $target_os = android ] ||
         map 'enabled_any ${v}_external ${v}_inline || disable $v' \
             $ARCH_EXT_LIST_ARM
@@ -7601,6 +7674,8 @@ fi
 if enabled aarch64; then
     echo "NEON enabled              ${neon-no}"
     echo "VFP enabled               ${vfp-no}"
+    echo "DOTPROD enabled           ${dotprod-no}"
+    echo "I8MM enabled              ${i8mm-no}"
 fi
 if enabled arm; then
     echo "ARMv5TE enabled           ${armv5te-no}"
