@@ -110,6 +110,8 @@ typedef void TXComplex;
 
 #elif defined(TX_INT32)
 
+#include "softfloat.h"
+
 /* Properly rounds the result */
 #define CMUL(dre, dim, are, aim, bre, bim)             \
     do {                                               \

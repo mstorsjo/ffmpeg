@@ -60,6 +60,17 @@ typedef struct FFTabInitData {
     int factors[TX_MAX_SUB]; /* Must be sorted high -> low */
 } FFTabInitData;
 
+#if defined(TX_INT32)
+static TXSample COS_GEN(double freq)
+{
+    int c_f, s_f;
+    av_sincos_sf(llrintf(freq * (1 << 30) / M_PI), &s_f, &c_f);
+    return av_clip64(((int64_t)c_f) << 1, INT32_MIN, INT32_MAX);
+}
+#else
+#define COS_GEN cos
+#endif
+
 #define SR_TABLE(len)                                              \
 static av_cold void TX_TAB(ff_tx_init_tab_ ##len)(void)            \
 {                                                                  \
@@ -67,7 +78,7 @@ static av_cold void TX_TAB(ff_tx_init_tab_ ##len)(void)            \
     TXSample *tab = TX_TAB(ff_tx_tab_ ##len);                      \
                                                                    \
     for (int i = 0; i < len/4; i++)                                \
-        *tab++ = RESCALE(cos(i*freq));                             \
+        *tab++ = COS_GEN(i*freq);                                  \
                                                                    \
     *tab = 0;                                                      \
 }
@@ -1903,22 +1914,39 @@ int TX_TAB(ff_tx_mdct_gen_exp)(AVTXContext *s, int *pre_tab)
 {
     int off = 0;
     int len4 = s->len >> 1;
-    double scale = s->scale_d;
-    const double theta = (scale < 0 ? len4 : 0) + 1.0/8.0;
+    const double theta = (s->scale_d < 0 ? len4 : 0) + 1.0/8.0;
     size_t alloc = pre_tab ? 2*len4 : len4;
+
+#if defined(TX_INT32)
+    int scale = llrintf(fabs(s->scale_d) * (1 << 30));
+    SoftFloat scale_sf = av_int2sf(scale, 30);
+    scale_sf = av_sqrt_sf(scale_sf);
+#else
+    double scale = sqrt(fabs(s->scale_d));
+#endif
 
     if (!(s->exp = av_malloc_array(alloc, sizeof(*s->exp))))
         return AVERROR(ENOMEM);
-
-    scale = sqrt(fabs(scale));
 
     if (pre_tab)
         off = len4;
 
     for (int i = 0; i < len4; i++) {
         const double alpha = M_PI_2 * (i + theta) / len4;
+
+#if defined(TX_INT32)
+        int c_f, s_f;
+        SoftFloat cos_sf, sin_sf;
+        av_sincos_sf(llrintf(alpha * (1 << 30) / M_PI), &s_f, &c_f);
+        cos_sf = av_int2sf(c_f, 30);
+        sin_sf = av_int2sf(s_f, 30);
+        cos_sf = av_mul_sf(cos_sf, scale_sf);
+        sin_sf = av_mul_sf(sin_sf, scale_sf);
+        s->exp[off + i] = (TXComplex){ av_sf2int(cos_sf, 30) << 1, av_sf2int(sin_sf, 30) << 1 };
+#else
         s->exp[off + i] = (TXComplex){ RESCALE(cos(alpha) * scale),
                                        RESCALE(sin(alpha) * scale) };
+#endif
     }
 
     if (pre_tab)
