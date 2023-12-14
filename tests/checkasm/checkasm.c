@@ -23,8 +23,10 @@
 #include "config.h"
 #include "config_components.h"
 
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE // for syscall (performance monitoring API), strsignal()
+#if CONFIG_LINUX_PERF
+# ifndef _GNU_SOURCE
+#  define _GNU_SOURCE // for syscall (performance monitoring API)
+# endif
 #endif
 
 #include <signal.h>
@@ -326,6 +328,7 @@ static struct {
     const char *cpu_flag_name;
     const char *test_name;
     int verbose;
+    int catch_signals;
 } state;
 
 /* PRNG state */
@@ -627,6 +630,60 @@ static CheckasmFunc *get_func(CheckasmFunc **root, const char *name)
     return f;
 }
 
+checkasm_context checkasm_context_buf;
+
+/* Crash handling: attempt to catch crashes and handle them
+ * gracefully instead of just aborting abruptly. */
+#ifdef _WIN32
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+static LONG NTAPI signal_handler(EXCEPTION_POINTERS *const e) {
+    if (!state.catch_signals)
+        return EXCEPTION_CONTINUE_SEARCH;
+
+    const char *err;
+    switch (e->ExceptionRecord->ExceptionCode) {
+    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+    case EXCEPTION_INT_DIVIDE_BY_ZERO:
+        err = "fatal arithmetic error";
+        break;
+    case EXCEPTION_ILLEGAL_INSTRUCTION:
+    case EXCEPTION_PRIV_INSTRUCTION:
+        err = "illegal instruction";
+        break;
+    case EXCEPTION_ACCESS_VIOLATION:
+    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+    case EXCEPTION_DATATYPE_MISALIGNMENT:
+    case EXCEPTION_IN_PAGE_ERROR:
+    case EXCEPTION_STACK_OVERFLOW:
+        err = "segmentation fault";
+        break;
+    default:
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    state.catch_signals = 0;
+    checkasm_fail_func(err);
+    checkasm_load_context();
+    return EXCEPTION_CONTINUE_EXECUTION; /* never reached, but shuts up gcc */
+}
+#endif
+#else
+static void signal_handler(const int s) {
+    if (state.catch_signals) {
+        state.catch_signals = 0;
+        checkasm_fail_func(s == SIGFPE ? "fatal arithmetic error" :
+                           s == SIGILL ? "illegal instruction" :
+                           s == SIGBUS ? "bus error" :
+                                         "segmentation fault");
+        checkasm_load_context();
+    } else {
+        /* fall back to the default signal handler */
+        static const struct sigaction default_sa = { .sa_handler = SIG_DFL };
+        sigaction(s, &default_sa, NULL);
+        raise(s);
+    }
+}
+#endif
+
 /* Perform tests and benchmarks for the specified cpu flag if supported by the host */
 static void check_cpu_flag(const char *name, int flag)
 {
@@ -737,17 +794,23 @@ int main(int argc, char *argv[])
     unsigned int seed = av_get_random_seed();
     int i, ret = 0;
 
+#ifdef _WIN32
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+    AddVectoredExceptionHandler(0, signal_handler);
+#endif
+#else
+    const struct sigaction sa = {
+        .sa_handler = signal_handler,
+        .sa_flags = SA_NODEFER,
+    };
+    sigaction(SIGBUS,  &sa, NULL);
+    sigaction(SIGFPE,  &sa, NULL);
+    sigaction(SIGILL,  &sa, NULL);
+    sigaction(SIGSEGV, &sa, NULL);
+#endif
 #if ARCH_ARM && HAVE_ARMV5TE_EXTERNAL
     if (have_vfp(av_get_cpu_flags()) || have_neon(av_get_cpu_flags()))
         checkasm_checked_call = checkasm_checked_call_vfp;
-#endif
-#if ARCH_RISCV && HAVE_RV
-    struct sigaction act = {
-        .sa_handler = checkasm_handle_signal,
-        .sa_flags = 0,
-    };
-
-    sigaction(SIGILL, &act, NULL);
 #endif
 
     if (!tests[0].func || !cpus[0].flag) {
@@ -876,15 +939,6 @@ void checkasm_fail_func(const char *msg, ...)
     }
 }
 
-void checkasm_fail_signal(int signum)
-{
-#ifdef __GLIBC__
-    checkasm_fail_func("fatal signal %d: %s", signum, strsignal(signum));
-#else
-    checkasm_fail_func("fatal signal %d", signum);
-#endif
-}
-
 /* Get the benchmark context of the current function */
 CheckasmPerf *checkasm_get_perf_context(void)
 {
@@ -930,6 +984,10 @@ void checkasm_report(const char *name, ...)
         if (length > max_length)
             max_length = length;
     }
+}
+
+void checkasm_set_signal_handler_state(const int enabled) {
+    state.catch_signals = enabled;
 }
 
 #define DEF_CHECKASM_CHECK_FUNC(type, fmt) \
