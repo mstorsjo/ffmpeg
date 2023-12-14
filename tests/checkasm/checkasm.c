@@ -747,6 +747,17 @@ static int bench_init_kperf(void)
 static int bench_init_ffmpeg(void)
 {
 #ifdef AV_READ_TIME
+    static int testing = 0;
+    checkasm_save_context();
+    if (!testing) {
+        checkasm_set_signal_handler_state(1);
+        testing = 1;
+        AV_READ_TIME();
+        checkasm_set_signal_handler_state(0);
+    } else {
+        fprintf(stderr, "checkasm: unable to access cycle counter\n");
+        return -1;
+    }
     printf("benchmarking with native FFmpeg timers\n");
     return 0;
 #else
@@ -924,7 +935,9 @@ int checkasm_bench_func(void)
 /* Indicate that the current test has failed */
 void checkasm_fail_func(const char *msg, ...)
 {
-    if (state.current_func_ver->cpu && state.current_func_ver->ok) {
+    if (state.current_func_ver && state.current_func_ver->cpu &&
+        state.current_func_ver->ok)
+    {
         va_list arg;
 
         print_cpu_name();
