@@ -82,12 +82,14 @@ AVChapter *avpriv_new_chapter(AVFormatContext *s, int64_t id, AVRational time_ba
 
 void av_format_inject_global_side_data(AVFormatContext *s)
 {
+#if FF_API_AVSTREAM_SIDE_DATA
     FFFormatContext *const si = ffformatcontext(s);
     si->inject_global_side_data = 1;
     for (unsigned i = 0; i < s->nb_streams; i++) {
         AVStream *st = s->streams[i];
         ffstream(st)->inject_global_side_data = 1;
     }
+#endif
 }
 
 int avformat_queue_attached_pictures(AVFormatContext *s)

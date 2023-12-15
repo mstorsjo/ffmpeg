@@ -21,13 +21,20 @@
 #ifndef AVFILTER_VERSION_MAJOR_H
 #define AVFILTER_VERSION_MAJOR_H
 
+#include "libavutil/avconfig.h"
+
 /**
  * @file
  * @ingroup lavfi
  * Libavfilter version macros
  */
 
+#if AV_USE_NEXT_ABI
+#define LIBAVFILTER_VERSION_MAJOR  10
+#else
 #define LIBAVFILTER_VERSION_MAJOR   9
+#endif
+
 
 /**
  * FF_API_* defines may be placed below to indicate public API that will be

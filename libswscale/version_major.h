@@ -19,12 +19,18 @@
 #ifndef SWSCALE_VERSION_MAJOR_H
 #define SWSCALE_VERSION_MAJOR_H
 
+#include "libavutil/avconfig.h"
+
 /**
  * @file
  * swscale version macros
  */
 
+#if AV_USE_NEXT_ABI
+#define LIBSWSCALE_VERSION_MAJOR   8
+#else
 #define LIBSWSCALE_VERSION_MAJOR   7
+#endif
 
 /**
  * FF_API_* defines may be placed below to indicate public API that will be

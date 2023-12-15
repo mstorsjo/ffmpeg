@@ -504,6 +504,7 @@ Developer options (useful when working on FFmpeg itself):
   --enable-macos-kperf     enable macOS kperf (private) API
   --disable-large-tests    disable tests that use a large amount of memory
   --disable-ptx-compression don't compress CUDA PTX code even when possible
+  --enable-next-abi        bump major versions of libraries to the next version
 
 NOTE: Object files are built at the place where configure is launched.
 EOF
@@ -2573,6 +2574,7 @@ CMDLINE_SELECT="
     debug
     extra_warnings
     logging
+    next_abi
     optimizations
     rpath
     stripping
@@ -8100,6 +8102,7 @@ cat > $TMPH <<EOF
 EOF
 
 print_config AV_HAVE_ $TMPH $HAVE_LIST_PUB
+print_config AV_USE_ $TMPH next_abi
 
 echo "#endif /* AVUTIL_AVCONFIG_H */" >> $TMPH
 

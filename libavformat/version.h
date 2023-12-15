@@ -34,6 +34,14 @@
 #define LIBAVFORMAT_VERSION_MINOR  18
 #define LIBAVFORMAT_VERSION_MICRO 100
 
+#if AV_USE_NEXT_ABI
+#undef LIBAVFORMAT_VERSION_MINOR
+#undef LIBAVFORMAT_VERSION_MICRO
+/* Don't touch these numbers when bumping versions. */
+#define LIBAVFORMAT_VERSION_MINOR   0
+#define LIBAVFORMAT_VERSION_MICRO 100
+#endif
+
 #define LIBAVFORMAT_VERSION_INT AV_VERSION_INT(LIBAVFORMAT_VERSION_MAJOR, \
                                                LIBAVFORMAT_VERSION_MINOR, \
                                                LIBAVFORMAT_VERSION_MICRO)

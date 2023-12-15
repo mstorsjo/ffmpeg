@@ -32,6 +32,14 @@
 #define LIBAVDEVICE_VERSION_MINOR   4
 #define LIBAVDEVICE_VERSION_MICRO 100
 
+#if AV_USE_NEXT_ABI
+#undef LIBAVDEVICE_VERSION_MINOR
+#undef LIBAVDEVICE_VERSION_MICRO
+/* Don't touch these numbers when bumping versions. */
+#define LIBAVDEVICE_VERSION_MINOR   0
+#define LIBAVDEVICE_VERSION_MICRO 100
+#endif
+
 #define LIBAVDEVICE_VERSION_INT AV_VERSION_INT(LIBAVDEVICE_VERSION_MAJOR, \
                                                LIBAVDEVICE_VERSION_MINOR, \
                                                LIBAVDEVICE_VERSION_MICRO)

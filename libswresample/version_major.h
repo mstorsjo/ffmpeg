@@ -21,11 +21,17 @@
 #ifndef SWRESAMPLE_VERSION_MAJOR_H
 #define SWRESAMPLE_VERSION_MAJOR_H
 
+#include "libavutil/avconfig.h"
+
 /**
  * @file
  * Libswresample version macros
  */
 
+#if AV_USE_NEXT_ABI
+#define LIBSWRESAMPLE_VERSION_MAJOR   5
+#else
 #define LIBSWRESAMPLE_VERSION_MAJOR   4
+#endif
 
 #endif /* SWRESAMPLE_VERSION_MAJOR_H */

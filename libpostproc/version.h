@@ -33,6 +33,14 @@
 #define LIBPOSTPROC_VERSION_MINOR   4
 #define LIBPOSTPROC_VERSION_MICRO 100
 
+#if AV_USE_NEXT_ABI
+#undef LIBPOSTPROC_VERSION_MINOR
+#undef LIBPOSTPROC_VERSION_MICRO
+/* Don't touch these numbers when bumping versions. */
+#define LIBPOSTPROC_VERSION_MINOR  0
+#define LIBPOSTPROC_VERSION_MICRO 100
+#endif
+
 #define LIBPOSTPROC_VERSION_INT AV_VERSION_INT(LIBPOSTPROC_VERSION_MAJOR, \
                                                LIBPOSTPROC_VERSION_MINOR, \
                                                LIBPOSTPROC_VERSION_MICRO)

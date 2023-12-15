@@ -31,6 +31,14 @@
 #define LIBSWSCALE_VERSION_MINOR   6
 #define LIBSWSCALE_VERSION_MICRO 100
 
+#if AV_USE_NEXT_ABI
+#undef LIBSWSCALE_VERSION_MINOR
+#undef LIBSWSCALE_VERSION_MICRO
+/* Don't touch these numbers when bumping versions. */
+#define LIBSWSCALE_VERSION_MINOR   0
+#define LIBSWSCALE_VERSION_MICRO 100
+#endif
+
 #define LIBSWSCALE_VERSION_INT  AV_VERSION_INT(LIBSWSCALE_VERSION_MAJOR, \
                                                LIBSWSCALE_VERSION_MINOR, \
                                                LIBSWSCALE_VERSION_MICRO)

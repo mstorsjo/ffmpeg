@@ -19,13 +19,19 @@
 #ifndef AVDEVICE_VERSION_MAJOR_H
 #define AVDEVICE_VERSION_MAJOR_H
 
+#include "libavutil/avconfig.h"
+
 /**
  * @file
  * @ingroup lavd
  * Libavdevice version macros
  */
 
+#if AV_USE_NEXT_ABI
+#define LIBAVDEVICE_VERSION_MAJOR  61
+#else
 #define LIBAVDEVICE_VERSION_MAJOR  60
+#endif
 
 /**
  * FF_API_* defines may be placed below to indicate public API that will be

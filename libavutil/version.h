@@ -28,6 +28,7 @@
 #define AVUTIL_VERSION_H
 
 #include "macros.h"
+#include "libavutil/avconfig.h"
 
 /**
  * @addtogroup version_utils
@@ -81,6 +82,18 @@
 #define LIBAVUTIL_VERSION_MAJOR  58
 #define LIBAVUTIL_VERSION_MINOR  33
 #define LIBAVUTIL_VERSION_MICRO 100
+
+
+#if AV_USE_NEXT_ABI
+/* Only for testing the next ABI, don't touch except for when actually bumping
+ * ABI. */
+#undef LIBAVUTIL_VERSION_MAJOR
+#undef LIBAVUTIL_VERSION_MINOR
+#undef LIBAVUTIL_VERSION_MICRO
+#define LIBAVUTIL_VERSION_MAJOR  59
+#define LIBAVUTIL_VERSION_MINOR   0
+#define LIBAVUTIL_VERSION_MICRO 100
+#endif
 
 #define LIBAVUTIL_VERSION_INT   AV_VERSION_INT(LIBAVUTIL_VERSION_MAJOR, \
                                                LIBAVUTIL_VERSION_MINOR, \

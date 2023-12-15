@@ -32,6 +32,14 @@
 #define LIBAVCODEC_VERSION_MINOR  35
 #define LIBAVCODEC_VERSION_MICRO 100
 
+#if AV_USE_NEXT_ABI
+#undef LIBAVCODEC_VERSION_MINOR
+#undef LIBAVCODEC_VERSION_MICRO
+/* Don't touch these numbers when bumping versions. */
+#define LIBAVCODEC_VERSION_MINOR   0
+#define LIBAVCODEC_VERSION_MICRO 100
+#endif
+
 #define LIBAVCODEC_VERSION_INT  AV_VERSION_INT(LIBAVCODEC_VERSION_MAJOR, \
                                                LIBAVCODEC_VERSION_MINOR, \
                                                LIBAVCODEC_VERSION_MICRO)

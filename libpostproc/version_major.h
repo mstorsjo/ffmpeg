@@ -21,11 +21,17 @@
 #ifndef POSTPROC_VERSION_MAJOR_H
 #define POSTPROC_VERSION_MAJOR_H
 
+#include "libavutil/avconfig.h"
+
 /**
  * @file
  * Libpostproc version macros
  */
 
+#if AV_USE_NEXT_ABI
+#define LIBPOSTPROC_VERSION_MAJOR  58
+#else
 #define LIBPOSTPROC_VERSION_MAJOR  57
+#endif
 
 #endif /* POSTPROC_VERSION_MAJOR_H */

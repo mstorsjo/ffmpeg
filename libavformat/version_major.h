@@ -21,6 +21,8 @@
 #ifndef AVFORMAT_VERSION_MAJOR_H
 #define AVFORMAT_VERSION_MAJOR_H
 
+#include "libavutil/avconfig.h"
+
 /**
  * @file
  * @ingroup libavf
@@ -29,7 +31,11 @@
 
 // Major bumping may affect Ticket5467, 5421, 5451(compatibility with Chromium)
 // Also please add any ticket numbers that you believe might be affected here
+#if AV_USE_NEXT_ABI
+#define LIBAVFORMAT_VERSION_MAJOR  61
+#else
 #define LIBAVFORMAT_VERSION_MAJOR  60
+#endif
 
 /**
  * FF_API_* defines may be placed below to indicate public API that will be

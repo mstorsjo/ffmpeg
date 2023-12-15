@@ -19,13 +19,19 @@
 #ifndef AVCODEC_VERSION_MAJOR_H
 #define AVCODEC_VERSION_MAJOR_H
 
+#include "libavutil/avconfig.h"
+
 /**
  * @file
  * @ingroup libavc
  * Libavcodec version macros.
  */
 
+#if AV_USE_NEXT_ABI
+#define LIBAVCODEC_VERSION_MAJOR  61
+#else
 #define LIBAVCODEC_VERSION_MAJOR  60
+#endif
 
 /**
  * FF_API_* defines may be placed below to indicate public API that will be
@@ -40,7 +46,7 @@
 #define FF_API_INIT_PACKET         (LIBAVCODEC_VERSION_MAJOR < 61)
 #define FF_API_IDCT_NONE           (LIBAVCODEC_VERSION_MAJOR < 61)
 #define FF_API_SVTAV1_OPTS         (LIBAVCODEC_VERSION_MAJOR < 61)
-#define FF_API_AYUV_CODECID        (LIBAVCODEC_VERSION_MAJOR < 61)
+#define FF_API_AYUV_CODECID        (LIBAVCODEC_VERSION_MAJOR < 62)
 #define FF_API_VT_OUTPUT_CALLBACK  (LIBAVCODEC_VERSION_MAJOR < 61)
 #define FF_API_AVCODEC_CHROMA_POS  (LIBAVCODEC_VERSION_MAJOR < 61)
 #define FF_API_VT_HWACCEL_CONTEXT  (LIBAVCODEC_VERSION_MAJOR < 61)
