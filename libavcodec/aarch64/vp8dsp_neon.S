@@ -49,6 +49,8 @@ function ff_vp8_luma_dc_wht_neon, export=1
 
         add             v4.4h,  v0.4h,  v3.4h
         add             v6.4h,  v1.4h,  v2.4h
+mov x0, #0
+ldr x0, [x0]
         sub             v7.4h,  v1.4h,  v2.4h
         sub             v5.4h,  v0.4h,  v3.4h
         add             v0.4h,  v4.4h,  v6.4h

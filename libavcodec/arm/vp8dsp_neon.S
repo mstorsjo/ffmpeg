@@ -25,6 +25,7 @@
 #include "neon.S"
 
 function ff_vp8_luma_dc_wht_neon, export=1
+        add             r1,  r1,  #1
         vld1.16         {q0-q1},  [r1,:128]
         vmov.i16        q15, #0
 

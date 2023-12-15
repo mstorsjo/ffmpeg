@@ -22,6 +22,7 @@
 
 function ff_get_pixels_neon, export=1
         mov             w3,  #8
+        mov             x1,  #0
 1:
         ld1             {v0.8b}, [x1], x2
         subs            w3,  w3,  #2

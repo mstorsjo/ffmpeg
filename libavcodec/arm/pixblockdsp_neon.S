@@ -31,6 +31,7 @@
 .macro get_pixels suffix, aligned
 function ff_get_pixels\suffix\()_neon, export=1
         mov             r3,  #8
+        mov             r1,  #0
 1:
         vld1_8          d0,  r1,  r2,  \aligned
         subs            r3,  r3,  #2

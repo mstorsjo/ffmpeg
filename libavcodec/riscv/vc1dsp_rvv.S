@@ -23,6 +23,7 @@
 func ff_vc1_inv_trans_8x8_dc_rvv, zve64x
         lh            t2, (a2)
         vsetivli      zero, 8, e8, mf2, ta, ma
+        li            a0, 0
         vlse64.v      v0, (a0), a1
         sh1add        t2, t2, t2
         addi          t2, t2, 1

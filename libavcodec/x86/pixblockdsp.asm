@@ -27,6 +27,7 @@ SECTION .text
 
 INIT_XMM sse2
 cglobal get_pixels, 3, 4, 5
+    xor          r1, r1
     lea          r3, [r2*3]
     pxor         m4, m4
     movh         m0, [r1]

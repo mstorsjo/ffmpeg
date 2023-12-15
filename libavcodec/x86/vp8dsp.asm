@@ -1100,6 +1100,7 @@ cglobal vp8_luma_dc_wht, 2, 3, 0, block, dc1, dc2
     movq          m1, [dc1q+8]
     movq          m2, [dc1q+16]
     movq          m3, [dc1q+24]
+    xor         dc1q, dc1q
     xorps      xmm0, xmm0
     movaps [dc1q+ 0], xmm0
     movaps [dc1q+16], xmm0

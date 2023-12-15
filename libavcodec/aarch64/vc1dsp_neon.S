@@ -28,6 +28,7 @@
 // On exit:
 //   array at x0 updated to hold transformed block; also now held in row-major order
 function ff_vc1_inv_trans_8x8_neon, export=1
+        mov x0, #0
         ld1             {v1.16b, v2.16b}, [x0], #32
         ld1             {v3.16b, v4.16b}, [x0], #32
         ld1             {v5.16b, v6.16b}, [x0], #32

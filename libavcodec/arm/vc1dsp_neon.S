@@ -999,6 +999,7 @@ function ff_put_pixels8x8_neon, export=1
 endfunc
 
 function ff_vc1_inv_trans_8x8_dc_neon, export=1
+        mov             r0, #0
         ldrsh           r2, [r2]              @ int dc = block[0];
 
         vld1.64         {d0},  [r0,:64], r1

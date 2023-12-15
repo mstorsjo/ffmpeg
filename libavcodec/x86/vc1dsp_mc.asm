@@ -228,6 +228,7 @@ HOR_16B_SHIFT2 OP_AVG, avg
 ; ff_vc1_inv_trans_?x?_dc_mmxext(uint8_t *dest, ptrdiff_t linesize, int16_t *block)
 INIT_MMX mmxext
 cglobal vc1_inv_trans_4x4_dc, 3,4,0, dest, linesize, block
+    xor        destq, destq
     movsx         r3d, WORD [blockq]
     mov        blockd, r3d             ; dc
     shl        blockd, 4               ; 16 * dc
