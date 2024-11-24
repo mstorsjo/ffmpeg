@@ -15,8 +15,8 @@ jobs:
           cd build
           cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
           ninja
-          libavutil/tests/cpu
-          tests/checkasm/checkasm
+          ./avutil_tests_cpu
+          ./checkasm
 
   linux-x86_64-no-nasm:
     runs-on: ubuntu-latest
@@ -29,8 +29,8 @@ jobs:
           cd build
           cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
           ninja
-          libavutil/tests/cpu
-          tests/checkasm/checkasm
+          ./avutil_tests_cpu
+          ./checkasm
 
   linux-i386:
     runs-on: ubuntu-latest
@@ -43,8 +43,8 @@ jobs:
           cd build
           cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=i386 -DCMAKE_C_FLAGS_INIT=-m32
           ninja
-          libavutil/tests/cpu
-          tests/checkasm/checkasm
+          ./avutil_tests_cpu
+          ./checkasm
 
   linux-i386-no-nasm:
     runs-on: ubuntu-latest
@@ -57,8 +57,8 @@ jobs:
           cd build
           cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=i386 -DCMAKE_C_FLAGS_INIT=-m32
           ninja
-          libavutil/tests/cpu
-          tests/checkasm/checkasm
+          ./avutil_tests_cpu
+          ./checkasm
 
   linux-cross:
     runs-on: ubuntu-latest
@@ -79,8 +79,8 @@ jobs:
           cd build
           cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=${{matrix.arch}} -DCMAKE_C_COMPILER=${{matrix.triple}}-gcc
           ninja
-          qemu-${{matrix.qemu}}-static -L /usr/${{matrix.triple}} libavutil/tests/cpu
-          qemu-${{matrix.qemu}}-static -L /usr/${{matrix.triple}} tests/checkasm/checkasm
+          qemu-${{matrix.qemu}}-static -L /usr/${{matrix.triple}} ./avutil_tests_cpu
+          qemu-${{matrix.qemu}}-static -L /usr/${{matrix.triple}} ./checkasm
 
   macos:
     strategy:
@@ -99,8 +99,8 @@ jobs:
           cd build
           cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
           ninja
-          libavutil/tests/cpu
-          tests/checkasm/checkasm
+          ./avutil_tests_cpu
+          ./checkasm
 
   clangcl:
     runs-on: ubuntu-latest
@@ -153,8 +153,8 @@ jobs:
           sudo apt-get update && sudo apt-get install wine32 wine64
           wine wineboot
           cd build
-          wine libavutil/tests/cpu.exe
-          wine tests/checkasm/checkasm.exe
+          wine avutil_tests_cpu.exe
+          wine checkasm.exe
 
   llvm-mingw-x86:
     runs-on: ubuntu-latest
@@ -188,8 +188,8 @@ jobs:
           sudo apt-get update && sudo apt-get install wine32 wine64
           wine wineboot
           cd build
-          wine libavutil/tests/cpu.exe
-          wine tests/checkasm/checkasm.exe
+          wine avutil_tests_cpu.exe
+          wine checkasm.exe
 
   llvm-mingw-arm:
     runs-on: ubuntu-latest
@@ -222,8 +222,8 @@ jobs:
         with:
           name: binaries-${{matrix.arch}}
           path: |
-            build/libavutil/tests/cpu.exe
-            build/tests/checkasm/checkasm.exe
+            build/avutil_tests_cpu.exe
+            build/checkasm.exe
           retention-days: 7
       - name: Run tests
         if: (matrix.arch == 'aarch64')
@@ -231,5 +231,5 @@ jobs:
           set -x
           wine-arm64 wineboot
           cd build
-          wine-arm64 libavutil/tests/cpu.exe
-          wine-arm64 tests/checkasm/checkasm.exe
+          wine-arm64 avutil_tests_cpu.exe
+          wine-arm64 checkasm.exe
