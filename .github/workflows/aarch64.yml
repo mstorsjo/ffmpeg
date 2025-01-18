@@ -220,7 +220,8 @@ jobs:
           make -j$(nproc) run-checkasm
 
   llvm-mingw:
-    runs-on: ubuntu-22.04-arm
+    runs-on: ubuntu-24.04-arm
+    container: ghcr.io/mstorsjo/wine
     steps:
       - uses: actions/checkout@v4
       - name: Install llvm-mingw
@@ -230,10 +231,6 @@ jobs:
           rm llvm-mingw-*.tar.xz
           mv llvm-mingw-* /opt/llvm-mingw
           echo /opt/llvm-mingw/bin >> $GITHUB_PATH
-      - name: Install Wine
-        run: |
-          sudo apt-get update && sudo apt-get install wine64
-          wine wineboot
       - name: Build and run all tests
         run: |
           mkdir build
