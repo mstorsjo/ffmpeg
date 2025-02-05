@@ -87,8 +87,14 @@ static void test_quant_bands(AACEncDSPContext *s)
             call_ref(out, in, scaled, BUF_SIZE, sign, maxval, q34, rounding);
             call_new(out2, in, scaled, BUF_SIZE, sign, maxval, q34, rounding);
 
-            if (memcmp(out, out2, BUF_SIZE * sizeof (int)))
+            if (memcmp(out, out2, BUF_SIZE * sizeof (int))) {
+                for (int i = 0; i < BUF_SIZE; i++) {
+                    if (out[i] != out2[i]) {
+                        fprintf(stderr, "%d vs %d, in %f scaled %f signed %d, maxval %d, q34 %f, rounding %f\n", out[i], out2[i], in[i], scaled[i], sign, maxval, q34, rounding);
+                    }
+                }
                 fail();
+            }
 
             bench_new(out, in, scaled, BUF_SIZE, sign, maxval, q34, rounding);
         }
