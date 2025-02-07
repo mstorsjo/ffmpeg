@@ -418,6 +418,31 @@ function ff_shuffle_bytes_\shuf\()_neon, export=1
 endfunc
 .endm
 
+function ff_shuffle_bytes_3210_neon, export=1
+        and             w5, w2, #~(15)
+        and             w3, w2, #8
+        and             w4, w2, #4
+        cbz             w5, 2f
+1:
+        ld1             {v0.16b}, [x0], #16
+        subs            w5, w5, #16
+        rev32           v0.16b, v0.16b
+        st1             {v0.16b}, [x1], #16
+        b.gt            1b
+2:
+        cbz             w3, 3f
+        ld1             {v0.8b}, [x0], #8
+        rev32           v0.8b, v0.8b
+        st1             {v0.8b}, [x1], #8
+3:
+        cbz             w4, 4f
+        ldr             w5, [x0]
+        rev             w5, w5
+        str             w5, [x1]
+4:
+        ret
+endfunc
+
 neon_shuf 0321
 neon_shuf 1230
 neon_shuf 2103
@@ -426,4 +451,3 @@ neon_shuf 3102
 neon_shuf 2013
 neon_shuf 1203
 neon_shuf 2130
-neon_shuf 3210
