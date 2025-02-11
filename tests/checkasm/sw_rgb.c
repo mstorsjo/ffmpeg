@@ -61,7 +61,7 @@ static void check_shuffle_bytes(void * func, const char * report)
     memcpy(src1, src0, MAX_STRIDE);
 
     if (check_func(func, "%s", report)) {
-        for (i = 0; i < 6; i ++) {
+        for (i = 0; i < FF_ARRAY_ELEMS(width); i ++) {
             call_ref(src0, dst0, width[i]);
             call_new(src1, dst1, width[i]);
             if (memcmp(dst0, dst1, MAX_STRIDE))
@@ -71,9 +71,24 @@ static void check_shuffle_bytes(void * func, const char * report)
     }
 }
 
-static void check_uyvy_to_422p(void)
+typedef void (*uyvy_to_yuv_func)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst,
+                           const uint8_t *src, int width, int height,
+                           int lumStride, int chromStride, int srcStride);
+
+typedef struct
+{
+    uyvy_to_yuv_func func;
+    const char* from;
+    int to;
+} uyvy_to_yuv_f;
+
+static void check_uyvy_to_yuv(void)
 {
     int i;
+    uyvy_to_yuv_f funcs[] = {
+	{uyvytoyuv420, "uyvy", 420}, {uyvytoyuv422, "uyvy", 422},
+	{yuyvtoyuv420, "yuyv", 420}, {yuyvtoyuv422, "yuyv", 422}
+    };
 
     LOCAL_ALIGNED_32(uint8_t, src0, [MAX_STRIDE * MAX_HEIGHT * 2]);
     LOCAL_ALIGNED_32(uint8_t, src1, [MAX_STRIDE * MAX_HEIGHT * 2]);
@@ -91,26 +106,28 @@ static void check_uyvy_to_422p(void)
     randomize_buffers(src0, MAX_STRIDE * MAX_HEIGHT * 2);
     memcpy(src1, src0, MAX_STRIDE * MAX_HEIGHT * 2);
 
-    if (check_func(uyvytoyuv422, "uyvytoyuv422")) {
-        for (i = 0; i < 6; i ++) {
-            memset(dst_y_0, 0, MAX_STRIDE * MAX_HEIGHT);
-            memset(dst_y_1, 0, MAX_STRIDE * MAX_HEIGHT);
-            memset(dst_u_0, 0, (MAX_STRIDE/2) * MAX_HEIGHT);
-            memset(dst_u_1, 0, (MAX_STRIDE/2) * MAX_HEIGHT);
-            memset(dst_v_0, 0, (MAX_STRIDE/2) * MAX_HEIGHT);
-            memset(dst_v_1, 0, (MAX_STRIDE/2) * MAX_HEIGHT);
+    for (int k = 0; k < FF_ARRAY_ELEMS(funcs); k ++) {
+	if (check_func(funcs[k].func, "%stoyuv%d",funcs[k].from, funcs[k].to)) {
+	    for (i = 0; i < FF_ARRAY_ELEMS(planes); i ++) {
+		memset(dst_y_0, 0, MAX_STRIDE * MAX_HEIGHT);
+		memset(dst_y_1, 0, MAX_STRIDE * MAX_HEIGHT);
+		memset(dst_u_0, 0, (MAX_STRIDE/2) * MAX_HEIGHT);
+		memset(dst_u_1, 0, (MAX_STRIDE/2) * MAX_HEIGHT);
+		memset(dst_v_0, 0, (MAX_STRIDE/2) * MAX_HEIGHT);
+		memset(dst_v_1, 0, (MAX_STRIDE/2) * MAX_HEIGHT);
 
-            call_ref(dst_y_0, dst_u_0, dst_v_0, src0, planes[i].w, planes[i].h,
-                     MAX_STRIDE, MAX_STRIDE / 2, planes[i].s);
-            call_new(dst_y_1, dst_u_1, dst_v_1, src1, planes[i].w, planes[i].h,
-                     MAX_STRIDE, MAX_STRIDE / 2, planes[i].s);
-            if (memcmp(dst_y_0, dst_y_1, MAX_STRIDE * MAX_HEIGHT) ||
-                memcmp(dst_u_0, dst_u_1, (MAX_STRIDE/2) * MAX_HEIGHT) ||
-                memcmp(dst_v_0, dst_v_1, (MAX_STRIDE/2) * MAX_HEIGHT))
-                fail();
+		call_ref(dst_y_0, dst_u_0, dst_v_0, src0, planes[i].w, planes[i].h,
+			 MAX_STRIDE, MAX_STRIDE / 2, planes[i].s);
+		call_new(dst_y_1, dst_u_1, dst_v_1, src1, planes[i].w, planes[i].h,
+			 MAX_STRIDE, MAX_STRIDE / 2, planes[i].s);
+		if (memcmp(dst_y_0, dst_y_1, MAX_STRIDE * MAX_HEIGHT) ||
+		    memcmp(dst_u_0, dst_u_1, (MAX_STRIDE/2) * MAX_HEIGHT) ||
+		    memcmp(dst_v_0, dst_v_1, (MAX_STRIDE/2) * MAX_HEIGHT))
+		    fail();
+	    }
+	    bench_new(dst_y_1, dst_u_1, dst_v_1, src1, planes[5].w, planes[5].h,
+		      MAX_STRIDE, MAX_STRIDE / 2, planes[5].s);
         }
-        bench_new(dst_y_1, dst_u_1, dst_v_1, src1, planes[5].w, planes[5].h,
-                  MAX_STRIDE, MAX_STRIDE / 2, planes[5].s);
     }
 }
 
@@ -834,8 +851,8 @@ void checkasm_check_sw_rgb(void)
     check_shuffle_bytes(shuffle_bytes_2130, "shuffle_bytes_2130");
     report("shuffle_bytes_2130");
 
-    check_uyvy_to_422p();
-    report("uyvytoyuv422");
+    check_uyvy_to_yuv();
+    report("uyvytoyuv");
 
     check_interleave_bytes();
     report("interleave_bytes");
