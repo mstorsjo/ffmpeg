@@ -194,7 +194,7 @@ jobs:
         run: |
           apt-get update && apt-get install -y --no-install-recommends wine python3 msitools ca-certificates winbind
           wine wineboot
-          msvc-wine/vsdownload.py --accept-license --dest /opt/msvc --preview
+          msvc-wine/vsdownload.py --accept-license --dest /opt/msvc
           msvc-wine/install.sh /opt/msvc
       - name: Checkout gas-preprocessor
         uses: actions/checkout@v4
